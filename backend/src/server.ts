@@ -45,13 +45,23 @@ const io = new Server(server, {
 
 io.on('connection', socket => {
     
-    users.push({
-        socketId: socket.id
+    user.add(socket.id)
+    socket.join('room')
+    socket.to('room').emit('members')
+
+    socket.on('disconnect', () => {
+        user.remove(socket.id)
     })
 
-    socket.on('disconnect', socket => {
-        
+    // =======================================
+
+    console.log(`Novo usuário conectado: ${socket.id}`)
+
+    socket.on('peer', data => {
+
+        socket.emit('peer-response', data)
     })
+
 })
 
 server.listen(3333)

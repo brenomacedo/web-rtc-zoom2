@@ -1,23 +1,51 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import './App.css'
 import socket from './socket'
+import Peer from 'simple-peer'
 
 
 function App() {
 
+	const videoRef = useRef<HTMLVideoElement>(null)
+
 	useEffect(() => {
 
-		socket.emit('login', 'b88660501@gmail.com')
+		socket.on('members', () => {
+			console.log('Novo usuário conectado!')
+		})
+
+		function gotMedia (stream: MediaStream) {
+			var peer1 = new Peer({ initiator: true, stream: stream })
+			var peer2 = new Peer()
+		  
+			peer1.on('signal', data => {
+			  peer2.signal(data)
+			})
+		  
+			peer2.on('signal', data => {
+			  peer1.signal(data)
+			})
+		  
+			peer2.on('stream', stream => {
+			  // got remote video stream, now let's show it in a video tag
+				if(!videoRef.current) {
+					return
+				}
+				videoRef.current.srcObject = stream
+				videoRef.current.play()
+			})
+		  }
+
+		navigator.mediaDevices.getUserMedia({
+			video: true, audio: true
+		}).then(gotMedia).catch(() => alert('Deu ruim galera'))
 
 	}, [])
 
-	const sendMessage = () => {
-		socket.emit('message', 'hello world')
-	}
-
     return (
         <div className="App">
-			<button onClick={sendMessage}>BOTAO FODA</button>
+			<button onClick={() => {}}>BOTAO FODA</button>
+			<video ref={videoRef}></video>
         </div>
     )
 }
