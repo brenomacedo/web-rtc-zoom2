@@ -62,15 +62,26 @@ io.on('connection', socket => {
 
     console.log(`Novo usuário conectado: ${socket.id}`)
 
-    socket.on('signal', ({ data, email }) => {
-        const User = users.find(user => user.email === email)
+    socket.on('signal', ({ data, email, emailToCall }) => {
+        const User = users.find(user => user.email === emailToCall)
 
         if(!User?.socketId) {
-            console.log(`O usuário tentou mandar um socket para ${email} mas falhou`)
+            console.log(`O usuário tentou mandar um socket para ${emailToCall} mas falhou`)
             return
         }
 
-        socket.to(User.socketId).emit('signal', data)
+        socket.to(User.socketId).emit('receivedCall', { signal: data, email })
+    })
+
+    socket.on('acceptedCall', ({ data, email }) => {
+        const User = users.find(user => user.email === email)
+
+        if(!User?.socketId) {
+            console.log(`O usuário tentou responder um socket para ${email} mas falhou`)
+            return
+        }
+
+        socket.to(User.socketId).emit('acceptedCall', data)
     })
 
 })

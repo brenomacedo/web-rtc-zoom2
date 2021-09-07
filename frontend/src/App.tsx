@@ -20,13 +20,13 @@ function App() {
 		function gotMedia (stream: MediaStream) {
 			var peer = new Peer({ initiator: true, stream: stream })
 
-			socket.on('signal', data => {
+			socket.on('acceptedCall', data => {
 				console.log('Novo sinal recebido')
 				peer.signal(data)
 			})
 		  
 			peer.on('signal', data => {
-				socket.emit('signal', { data, email: emailToCall })
+				socket.emit('signal', { data, emailToCall, email })
 			})
 		  
 			peer.on('stream', stream => {
@@ -46,6 +46,37 @@ function App() {
 			video: true, audio: true
 		}).then(gotMedia).catch(() => alert('Deu ruim galera'))
 	}
+
+	useEffect(() => {
+		socket.on('receivedCall', ({ signal, email: emailToResponse }) => {
+			
+			function gotMedia (stream: MediaStream) {
+				var peer = new Peer({ stream: stream })
+	
+				peer.signal(signal)
+			  
+				peer.on('signal', data => {
+					socket.emit('acceptedCall', { data, email: emailToResponse })
+				})
+			  
+				peer.on('stream', stream => {
+					// got remote video stream, now let's show it in a video tag
+					if(!videoRef.current) {
+						return
+					}
+					videoRef.current.srcObject = stream
+					videoRef.current.play()
+				})
+	
+				peer.on('close', () => alert('conexão fechou'))
+				peer.on('error', () => alert('conexão fechou'))
+			}
+	
+			navigator.mediaDevices.getUserMedia({
+				video: true, audio: true
+			}).then(gotMedia).catch(() => alert('Deu ruim galera'))
+		})
+	}, [])
 
     return (
         <div className="App">
