@@ -53,13 +53,24 @@ io.on('connection', socket => {
         user.remove(socket.id)
     })
 
+    socket.on('login', email => {
+        user.login(socket.id, email)
+        console.log(`o usuário ${email} tentou se conectar`)
+    })
+
     // =======================================
 
     console.log(`Novo usuário conectado: ${socket.id}`)
 
-    socket.on('peer', data => {
+    socket.on('signal', ({ data, email }) => {
+        const User = users.find(user => user.email === email)
 
-        socket.emit('peer-response', data)
+        if(!User?.socketId) {
+            console.log(`O usuário tentou mandar um socket para ${email} mas falhou`)
+            return
+        }
+
+        socket.to(User.socketId).emit('signal', data)
     })
 
 })
